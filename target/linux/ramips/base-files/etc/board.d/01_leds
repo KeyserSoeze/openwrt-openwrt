@@ -150,6 +150,9 @@ case $board in
     gl-mt300a)
 		set_wifi_led "gl-mt300a:wlan"
 		;;
+	gl-mt300n)
+		set_wifi_led "gl-mt300n:wlan"
+		;;
 	mpr-a1)
 		set_wifi_led "hame:blue:system"
 		;;
