@@ -128,18 +128,23 @@ static const struct flash_partition_entry cpe510_partitions[] = {
 };
 
 /**
-   The support list for CPE210/220/510/520
+   The support list for CPE210/220
+*/
+static const char cpe210_support_list[] =
+	"SupportList:\r\n"
+	"CPE210(TP-LINK|UN|N300-2):1.0\r\n"
+	"CPE210(TP-LINK|UN|N300-2):1.1\r\n"
+	"CPE220(TP-LINK|UN|N300-2):1.0\r\n"
+	"CPE220(TP-LINK|UN|N300-2):1.1\r\n";
+/**
+   The support list for CPE/510/520
 */
 static const char cpe510_support_list[] =
 	"SupportList:\r\n"
 	"CPE510(TP-LINK|UN|N300-5):1.0\r\n"
 	"CPE510(TP-LINK|UN|N300-5):1.1\r\n"
 	"CPE520(TP-LINK|UN|N300-5):1.0\r\n"
-	"CPE520(TP-LINK|UN|N300-5):1.1\r\n"
-	"CPE210(TP-LINK|UN|N300-2):1.0\r\n"
-	"CPE210(TP-LINK|UN|N300-2):1.1\r\n"
-	"CPE220(TP-LINK|UN|N300-2):1.0\r\n"
-	"CPE220(TP-LINK|UN|N300-2):1.1\r\n";
+	"CPE520(TP-LINK|UN|N300-5):1.1\r\n";
 
 #define error(_ret, _errno, _str, ...)				\
 	do {							\
@@ -438,12 +443,18 @@ static void * generate_sysupgrade_image(const struct flash_partition_entry *flas
 
 
 /** Generates an image for CPE210/220/510/520 and writes it to a file */
-static void do_cpe510(const char *output, const char *kernel_image, const char *rootfs_image, uint32_t rev, bool add_jffs2_eof, bool sysupgrade) {
+static void do_cpe(const char *output,
+		const char *kernel_image,
+		const char *rootfs_image,
+		uint32_t rev,
+		bool add_jffs2_eof,
+		bool sysupgrade,
+		const char *support_list) {
 	struct image_partition_entry parts[6] = {};
 
 	parts[0] = make_partition_table(cpe510_partitions);
 	parts[1] = make_soft_version(rev);
-	parts[2] = make_support_list(cpe510_support_list);
+	parts[2] = make_support_list(support_list, false);
 	parts[3] = read_file("os-image", kernel_image, false);
 	parts[4] = read_file("file-system", rootfs_image, add_jffs2_eof);
 
@@ -550,8 +561,10 @@ int main(int argc, char *argv[]) {
 	if (!output)
 		error(1, 0, "no output filename has been specified");
 
-	if (strcmp(board, "CPE510") == 0)
-		do_cpe510(output, kernel_image, rootfs_image, rev, add_jffs2_eof, sysupgrade);
+	if (strcmp(board, "CPE210") == 0)
+		do_cpe(output, kernel_image, rootfs_image, rev, add_jffs2_eof, sysupgrade, cpe210_support_list);
+	else if (strcmp(board, "CPE510") == 0)
+		do_cpe(output, kernel_image, rootfs_image, rev, add_jffs2_eof, sysupgrade, cpe510_support_list);
 	else
 		error(1, 0, "unsupported board %s", board);
 
