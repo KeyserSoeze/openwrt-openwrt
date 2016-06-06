@@ -72,6 +72,18 @@ define Build/mktplinkfw-initramfs
 	@mv $@.new $@
 endef
 
+define Build/tplink-safeloader
+       -$(STAGING_DIR_HOST)/bin/tplink-safeloader \
+	-B $(TPLINK_BOARD_NAME) \
+	-V $(REVISION) \
+	-k $(word 1,$^) \
+	-r $@ \
+	-o $@.new \
+	-j \
+	$(wordlist 2,$(words $(1)),$(1)) \
+	$(if $(findstring sysupgrade,$(word 1,$(1))),-S) && mv $@.new $@ || rm -f $@
+endef
+
 define Build/loader-common
 	rm -rf $@.src
 	$(MAKE) -C lzma-loader \
@@ -238,6 +250,25 @@ $(Device/tplink)
   TPLINK_FLASHLAYOUT := 16Mlzma
   IMAGE_SIZE := 15872k
 endef
+
+define Device/cpe210-220
+   MTDPARTS := spi0.0:128k(u-boot)ro,64k(pation-table)ro,64k(product-info)ro,1536k(kernel),6144k(rootfs),192k(config)ro,64k(ART)ro,7680k@0x40000(firmware)
+   IMAGE_SIZE := 7680k
+   BOARDNAME := CPE210
+   TPLINK_BOARD_NAME := CPE510
+   DEVICE_PROFILE := CPE510
+   LOADER_TYPE := elf
+   KERNEL := kernel-bin | patch-cmdline | lzma | loader-kernel
+   IMAGES := sysupgrade.bin factory.bin
+   IMAGE/sysupgrade.bin := append-rootfs | tplink-safeloader sysupgrade
+   IMAGE/factory.bin := append-rootfs | tplink-safeloader factory
+ endef
+
+define Device/cpe510-520
+$(Device/cpe210-220)
+  BOARDNAME := CPE510
+endef
+TARGET_DEVICES += cpe210-220 cpe510-520
 
 define Device/tl-wdr4300-v1
 $(Device/tplink-8mlzma)
@@ -1019,7 +1050,6 @@ cameo_ap123_mtdlayout_4M=mtdparts=spi0.0:64k(u-boot)ro,64k(nvram)ro,3712k(firmwa
 cameo_db120_mtdlayout=mtdparts=spi0.0:64k(uboot)ro,64k(nvram)ro,15936k(firmware),192k(lang)ro,64k(mac)ro,64k(art)ro
 cameo_db120_mtdlayout_8M=mtdparts=spi0.0:64k(uboot)ro,64k(nvram)ro,7872k(firmware),128k(lang)ro,64k(art)ro
 cap4200ag_mtdlayout=mtdparts=spi0.0:256k(u-boot),64k(u-boot-env),320k(custom)ro,1536k(kernel),12096k(rootfs),2048k(failsafe),64k(art),13632k@0xa0000(firmware)
-cpe510_mtdlayout=mtdparts=spi0.0:128k(u-boot)ro,64k(pation-table)ro,64k(product-info)ro,1536k(kernel),6144k(rootfs),192k(config)ro,64k(ART)ro,7680k@0x40000(firmware)
 eap300v2_mtdlayout=mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env),320k(custom),13632k(firmware),2048k(failsafe),64k(art)ro
 db120_mtdlayout=mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,6336k(rootfs),1408k(kernel),64k(nvram),64k(art)ro,7744k@0x50000(firmware)
 dgl_5500_mtdlayout=mtdparts=spi0.0:192k(u-boot)ro,64k(nvram)ro,15296k(firmware),192k(lang)ro,512k(my-dlink)ro,64k(mac)ro,64k(art)ro
@@ -2058,9 +2088,6 @@ $(eval $(call SingleProfile,TPLINK,64kraw,TLWR1043V1,tl-wr1043nd-v1,TL-WR1043ND,
 $(eval $(call SingleProfile,TPLINK-LZMA,64kraw,TLWR1043V2,tl-wr1043nd-v2,TL-WR1043ND-v2,ttyS0,115200,0x10430002,1,8M))
 $(eval $(call SingleProfile,TPLINK-LZMA,64kraw,TLWR1043V3,tl-wr1043nd-v3,TL-WR1043ND-v2,ttyS0,115200,0x10430003,1,8M))
 $(eval $(call SingleProfile,TPLINK-LZMA,64kraw,TLWR2543,tl-wr2543-v1,TL-WR2543N,ttyS0,115200,0x25430001,1,8Mlzma,-v 3.13.99))
-
-$(eval $(call SingleProfile,TPLINK-SAFELOADER,64kraw,CPE510,cpe210-220,CPE210,ttyS0,115200,$$(cpe510_mtdlayout),CPE510))
-$(eval $(call SingleProfile,TPLINK-SAFELOADER,64kraw,CPE510,cpe510-520,CPE510,ttyS0,115200,$$(cpe510_mtdlayout),CPE510))
 
 $(eval $(call SingleProfile,UAPPRO,64k,UAPPRO,ubnt-uap-pro,UAP-PRO,ttyS0,115200,BZ,BZ,ar934x))
 $(eval $(call SingleProfile,UAPPRO,64k,UBNTUNIFIOUTDOORPLUS,ubnt-unifi-outdoor-plus,UBNT-UOP,ttyS0,115200,BZ,BZ,ar7240))
