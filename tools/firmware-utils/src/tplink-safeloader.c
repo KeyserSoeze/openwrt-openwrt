@@ -454,7 +454,7 @@ static void do_cpe(const char *output,
 
 	parts[0] = make_partition_table(cpe510_partitions);
 	parts[1] = make_soft_version(rev);
-	parts[2] = make_support_list(support_list, false);
+	parts[2] = make_support_list(support_list);
 	parts[3] = read_file("os-image", kernel_image, false);
 	parts[4] = read_file("file-system", rootfs_image, add_jffs2_eof);
 
