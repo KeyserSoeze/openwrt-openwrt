@@ -262,7 +262,7 @@ define Device/cpe510-520
    IMAGES := sysupgrade.bin factory.bin
    IMAGE/sysupgrade.bin := append-rootfs | tplink-safeloader sysupgrade
    IMAGE/factory.bin := append-rootfs | tplink-safeloader factory
- endef
+endef
 
 define Device/cpe210-220
 $(Device/cpe510-520)
